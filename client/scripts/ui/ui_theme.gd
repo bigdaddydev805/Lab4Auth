@@ -16,7 +16,7 @@ const BLUE := Color("6cb4e4")
 const ORANGE := Color("e8893a")
 const RED := Color("d9534f")
 
-const BAR_BG := Color(0.165, 0.121, 0.2, 0.94)
+const BAR_BG := Color(0.165, 0.121, 0.2, 0.8)
 
 static var _bold: FontVariation
 static var _italic: FontVariation

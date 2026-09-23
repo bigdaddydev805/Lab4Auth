@@ -1,22 +1,19 @@
 extends CanvasLayer
 ## Crisp screen-space UI over the world: name tags, "thinking" dots and speech bubbles.
-## Each frame they are placed over their character via the world→screen transform, flipped
+## Each frame they are placed over their character via the camera's projection, flipped
 ## below the character when there is no room above, kept inside `safe_rect`, and stacked so
 ## bubbles don't overlap.
 
-const OfficeView := preload("res://scripts/world/office_view.gd")
+const Office3D := preload("res://scripts/world3d/office3d.gd")
 const WorldState := preload("res://scripts/model/world_state.gd")
-const CharacterSprite := preload("res://scripts/world/character_sprite.gd")
 const NameTag := preload("res://scripts/ui/name_tag.gd")
 const ThinkingDots := preload("res://scripts/ui/thinking_dots.gd")
 const SpeechBubble := preload("res://scripts/ui/speech_bubble.gd")
 const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 
-## Height of a character's head above its feet, in art pixels.
-const HEAD_ART_PX := 29.0
 const GAP := 3.0
 
-var office: OfficeView
+var office: Office3D
 var state: WorldState
 ## Screen area overlay elements must stay inside (excludes the HUD bars and side panel).
 var safe_rect: Rect2 = Rect2(0, 0, 1280, 720)
@@ -27,7 +24,7 @@ var _thinking: Dictionary = {}  # emp_id -> ThinkingDots
 var _bubbles: Array = []        # SpeechBubble, oldest first
 
 
-func setup(office_view: OfficeView, world_state: WorldState) -> void:
+func setup(office_view: Office3D, world_state: WorldState) -> void:
 	office = office_view
 	state = world_state
 	layer = 5
@@ -93,27 +90,25 @@ func _sync_nodes() -> void:
 
 
 func _place_all() -> void:
-	var xf: Transform2D = office.get_global_transform()
-	var px: float = office.scale.x
 	var anchors: Dictionary = {}  # emp_id -> {x, above_y, below_y}
 	for emp_id: String in office.characters.keys():
-		var ch: CharacterSprite = office.characters[emp_id]
 		var tag: NameTag = _tags.get(emp_id)
 		var dots: ThinkingDots = _thinking.get(emp_id)
 		if tag == null:
 			continue
-		var shown: bool = ch.has_sheet() and office.visible
+		var a: Dictionary = office.anchor_of(emp_id)
+		var shown: bool = not a.is_empty()
 		tag.visible = shown
 		if not shown:
 			dots.visible = false
 			continue
 		var emp: Dictionary = state.employees.get(emp_id, {})
-		tag.font_size = 12 if px >= 3.0 else 11
+		var feet: Vector2 = a["feet"]
+		var head: Vector2 = a["head"]
+		tag.font_size = 12 if feet.y - head.y > 60.0 else 11
 		tag.set_text(str(emp.get("name", emp_id)))
 		tag.selected = emp_id == office.selected_id
-		var feet: Vector2 = xf * ch.position
-		var head_y: float = feet.y - (HEAD_ART_PX - (CharacterSprite.SEATED_DROP if ch.seated else 0)) * px
-		var pos: Vector2 = Vector2(feet.x - tag.size.x * 0.5, head_y - tag.size.y - GAP)
+		var pos: Vector2 = Vector2(head.x - tag.size.x * 0.5, head.y - tag.size.y - GAP)
 		var below: bool = pos.y < safe_rect.position.y
 		if below:
 			pos.y = feet.y + GAP
@@ -124,7 +119,7 @@ func _place_all() -> void:
 			dots.position = (pos + Vector2(tag.size.x + 1.0, -dots.size.y + tag.size.y * 0.5 + 2.0)).round()
 			if below:
 				dots.position.y = pos.y + tag.size.y * 0.5 - dots.size.y * 0.5
-		anchors[emp_id] = {"x": feet.x, "above": pos.y - GAP, "below": pos.y + tag.size.y + GAP if below else feet.y + GAP, "tag_below": below}
+		anchors[emp_id] = {"x": head.x, "above": pos.y - GAP, "below": pos.y + tag.size.y + GAP if below else feet.y + GAP, "tag_below": below}
 	_place_bubbles(anchors)
 
 

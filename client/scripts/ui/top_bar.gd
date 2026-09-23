@@ -7,6 +7,7 @@ const UiTheme := preload("res://scripts/ui/ui_theme.gd")
 signal pause_pressed(pause: bool)
 signal speed_chosen(value: float)
 signal panel_toggle_pressed
+signal sound_toggle_pressed
 
 const HEIGHT := 32
 const SPEEDS: Array[float] = [5.0, 20.0, 60.0, 240.0]
@@ -26,6 +27,7 @@ var _conn: Label
 var _pause: Button
 var _speed_buttons: Array[Button] = []
 var _paused: bool = false
+var _sound: Button
 
 
 func _init() -> void:
@@ -75,6 +77,8 @@ func _init() -> void:
 		b.pressed.connect(func() -> void: speed_chosen.emit(value))
 		_speed_buttons.append(b)
 	row.add_child(VSeparator.new())
+	_sound = _button(row, "Sound off", "Soft ambient sound: rain, keyboards, the coffee machine (M)")
+	_sound.pressed.connect(func() -> void: sound_toggle_pressed.emit())
 	var panel_btn: Button = _button(row, "Panel", "Show or hide the side panel (F3)")
 	panel_btn.pressed.connect(func() -> void: panel_toggle_pressed.emit())
 	set_connection(0, "")
@@ -95,6 +99,10 @@ func set_clock(info: Dictionary, paused: bool, scale: float, effective_scale: fl
 	_slow.text = "chatting · %s×" % _fmt_scale(effective_scale) if slowed else ""
 	for i: int in range(SPEEDS.size()):
 		_speed_buttons[i].set_pressed_no_signal(absf(SPEEDS[i] - scale) < 0.01)
+
+
+func set_sound(on: bool) -> void:
+	_sound.text = "Sound on" if on else "Sound off"
 
 
 func set_time_text(text: String) -> void:

@@ -1,6 +1,6 @@
 extends Node
 ## HelpCo client entry point. Builds the scene in code and wires the server link, world state,
-## art, office view, world overlay and HUD together. The server is the only source of truth:
+## the 3D office diorama, world overlay, ambience and HUD together. The server is the only source of truth:
 ## this client renders what it says and sends commands.
 
 const CliArgs := preload("res://scripts/cli_args.gd")
@@ -9,7 +9,8 @@ const WorldState := preload("res://scripts/model/world_state.gd")
 const ServerLink := preload("res://scripts/net/server_link.gd")
 const ArtStore := preload("res://scripts/net/art_store.gd")
 const HttpUtil := preload("res://scripts/net/http_util.gd")
-const OfficeView := preload("res://scripts/world/office_view.gd")
+const Office3D := preload("res://scripts/world3d/office3d.gd")
+const Ambience := preload("res://scripts/world3d/ambience.gd")
 const WorldOverlay := preload("res://scripts/ui/world_overlay.gd")
 const Hud := preload("res://scripts/ui/hud.gd")
 const StatusLayer := preload("res://scripts/ui/status_layer.gd")
@@ -19,14 +20,15 @@ const Commands := preload("res://scripts/commands.gd")
 
 const DEFAULT_SERVER := "127.0.0.1:8765"
 const BACKFILL_EVENTS := 80
-const BG_COLOR := Color("2a1f33")
+const BG_COLOR := Color("1b1628")
 
 var args: Dictionary = {}
 var settings: ClientSettings
 var state: WorldState = WorldState.new()
 var link: ServerLink
 var art: ArtStore
-var office: OfficeView
+var office: Office3D
+var ambience: Ambience
 var overlay: WorldOverlay
 var hud: Hud
 var status_layer: StatusLayer
@@ -35,7 +37,6 @@ var commands: Commands
 var selected_id: String = ""
 
 var _pending_select: String = ""
-var _world_tween: Tween
 var _lists_dirty: bool = false
 var _lists_timer: float = 0.0
 var _status_timer: float = 0.0
@@ -52,7 +53,7 @@ func _ready() -> void:
 	art.reset("http://" + server)
 	link.start(server)
 	_pending_select = str(args.get("select", ""))
-	var panel_open: bool = bool(settings.get_value("panel_open", true))
+	var panel_open: bool = bool(settings.get_value("panel_open", false))
 	if args.has("panel"):
 		panel_open = str(args["panel"]) not in ["off", "false", "0"]
 	hud.set_panel_open(panel_open, false)
@@ -70,9 +71,11 @@ func _build() -> void:
 	add_child(link)
 	art = ArtStore.new()
 	add_child(art)
-	office = OfficeView.new()
-	office.setup(state, art)
+	office = Office3D.new()
 	add_child(office)
+	office.setup(state)
+	ambience = Ambience.new()
+	add_child(ambience)
 	overlay = WorldOverlay.new()
 	overlay.setup(office, state)
 	add_child(overlay)
@@ -93,9 +96,7 @@ func _build() -> void:
 func _wire() -> void:
 	link.message_received.connect(state.apply)
 	link.link_state_changed.connect(_on_link_state)
-	art.office_art_ready.connect(_on_office_art)
 	art.sheet_ready.connect(func(emp_id: String) -> void:
-		office.on_sheet_ready(emp_id)
 		if emp_id == selected_id:
 			_refresh_inspector())
 
@@ -110,13 +111,17 @@ func _wire() -> void:
 	state.decision_changed.connect(func(emp_id: String) -> void:
 		if emp_id == selected_id:
 			_refresh_inspector())
-	state.whiteboard_changed.connect(func() -> void: hud.side_panel.set_whiteboard(state.whiteboard))
+	state.whiteboard_changed.connect(func() -> void:
+		hud.side_panel.set_whiteboard(state.whiteboard)
+		office.set_whiteboard(state.whiteboard))
 	state.clock_changed.connect(_refresh_clock)
 	state.ack_received.connect(commands.on_ack)
 
 	var top := hud.top_bar
 	top.pause_pressed.connect(func(pause: bool) -> void: commands.clock("pause" if pause else "resume"))
 	top.speed_chosen.connect(func(value: float) -> void: commands.clock("scale", value))
+	top.sound_toggle_pressed.connect(_toggle_sound)
+	office.rig.tapped.connect(_on_tap)
 	hud.panel_visibility_changed.connect(func(open: bool) -> void:
 		settings.set_value("panel_open", open)
 		_relayout(true))
@@ -149,9 +154,10 @@ func _on_snapshot() -> void:
 		state.employees.size(), state.items.size(), state.questions.size()])
 	if hud.side_panel.feed.max_seq() > state.last_event_seq:
 		hud.side_panel.feed.reset()  # A different (or reset) world.
-	art.ensure_office_art()
-	if art.has_office_art():
-		office.rebuild()
+	_relayout(false)
+	office.rebuild()
+	for emp: Dictionary in state.employees.values():
+		art.ensure_sheet(emp)
 	var osz: Vector2 = office.office_size()
 	corner.office_px = Vector2i(osz)
 	_refresh_clock()
@@ -160,6 +166,12 @@ func _on_snapshot() -> void:
 	hud.side_panel.set_whiteboard(state.whiteboard)
 	hud.top_bar.set_world_name(state.world_name)
 	_backfill_feed()
+	if args.has("hour"):
+		office.atmosphere.force_hour = float(args["hour"])
+	if args.has("zoom"):
+		office.rig.zoom_by(float(args["zoom"]))
+	if args.has("weather"):
+		office.atmosphere.weather_mode = str(args["weather"])
 	if _pending_select != "" and state.employees.has(_pending_select):
 		_select(_pending_select)
 		_pending_select = ""
@@ -170,14 +182,9 @@ func _on_snapshot() -> void:
 	_update_status()
 
 
-func _on_office_art() -> void:
-	office.rebuild()
-	_relayout(false)
-	_update_status()
-
-
 func _on_employee_changed(emp_id: String) -> void:
 	office.sync_employee(emp_id)
+	art.ensure_sheet(state.employees.get(emp_id, {}))
 	_lists_dirty = true
 	if emp_id == selected_id:
 		_refresh_inspector()
@@ -197,7 +204,10 @@ func _on_event(ev: Dictionary, live: bool) -> void:
 			var targets: Array = ev.get("targets", []) if typeof(ev.get("targets")) == TYPE_ARRAY else []
 			if not targets.is_empty():
 				overlay.show_bubble(str(targets[0]), "(intercom) " + str(payload.get("text", "")), "intercom")
+		"employee.arrived":
+			ambience.chime(false)
 		"question.answered":
+			ambience.chime(true)
 			hud.toasts.show_toast("%s answered %s!" % [state.employee_name(actor), str(payload.get("id", ""))], "good")
 
 
@@ -217,6 +227,7 @@ func _backfill_feed() -> void:
 func _select(emp_id: String) -> void:
 	selected_id = emp_id
 	office.selected_id = emp_id
+	office.rig.following = emp_id != ""
 	if emp_id != "":
 		hud.bottom_bar.select_recipient(emp_id)
 		if not hud.panel_open and not corner.active:
@@ -277,6 +288,7 @@ func _process(delta: float) -> void:
 	if state.clock.has_time():
 		hud.top_bar.set_time_text(state.clock.format_time(now))
 	office.tick(now, delta, overlay.talking())
+	_feed_ambience()
 	overlay.refresh()
 	_lists_timer -= delta
 	if _lists_dirty and _lists_timer <= 0.0:
@@ -300,26 +312,54 @@ func _unhandled_input(event: InputEvent) -> void:
 					hud.set_panel_open(not hud.panel_open)
 			KEY_ESCAPE:
 				_select("")
+				office.rig.frame_all()
 			KEY_SPACE:
 				commands.clock("resume" if state.clock.paused else "pause")
+			KEY_M:
+				_toggle_sound()
+			KEY_R:
+				hud.toasts.show_toast("Weather: %s" % office.atmosphere.cycle_weather(), "info")
 			_:
 				return
 		get_viewport().set_input_as_handled()
+
+
+## A click or tap on the world that wasn't a drag: select whoever is there (or nobody).
+func _on_tap(screen_pos: Vector2) -> void:
+	if corner.active:
 		return
-	var mb: InputEventMouseButton = event as InputEventMouseButton
-	if mb and mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not corner.active:
-		get_viewport().gui_release_focus()
-		var hit: String = office.character_at(office.get_local_mouse_position())
-		if hit != "" or selected_id != "":
-			_select(hit)
-		get_viewport().set_input_as_handled()
+	get_viewport().gui_release_focus()
+	var hit: String = office.character_at(screen_pos)
+	if hit != "" or selected_id != "":
+		_select(hit)
+
+
+func _toggle_sound() -> void:
+	var on: bool = ambience.toggle()
+	hud.top_bar.set_sound(on)
+
+
+func _feed_ambience() -> void:
+	ambience.rain = office.atmosphere.rain
+	var typists: int = 0
+	var coffee: bool = false
+	for ch: Variant in office.characters.values():
+		var act: Variant = ch.emp.get("activity")
+		if typeof(act) != TYPE_DICTIONARY:
+			continue
+		if ch.seated and str(act.get("pose", "")) == "type":
+			typists += 1
+		if str(act.get("kind", "")) == "coffee" and not ch.walking:
+			coffee = true
+	ambience.typists = typists
+	ambience.coffee = coffee
 
 
 func _update_hover() -> void:
 	var shape: Input.CursorShape = Input.CURSOR_ARROW
 	if not corner.active and office.visible:
 		var mouse: Vector2 = get_viewport().get_mouse_position()
-		if not hud.is_over_ui(mouse) and office.character_at(office.get_local_mouse_position()) != "":
+		if not hud.is_over_ui(mouse) and office.character_at(mouse) != "":
 			shape = Input.CURSOR_POINTING_HAND
 	if int(shape) != _hover_cursor:
 		_hover_cursor = int(shape)
@@ -328,11 +368,9 @@ func _update_hover() -> void:
 
 # ------------------------------------------------------------------ layout & status
 
-## Scales the office by the largest integer that fits and places it between the bars (shifted
-## left when the side panel is open). The bars may cover the outer walls' top edges only.
-func _relayout(animate: bool) -> void:
+## Tells the camera how much of the screen the HUD covers, so the office centers in the rest.
+func _relayout(_animate: bool) -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
-	var osz: Vector2 = office.office_size()
 	var top: float = 0.0
 	var bottom: float = 0.0
 	var right: float = 0.0
@@ -340,27 +378,11 @@ func _relayout(animate: bool) -> void:
 		top = hud.top_height()
 		bottom = hud.bottom_height()
 		right = hud.panel_width() if hud.panel_open else 0.0
-	var px: int = maxi(1, int(floor(minf(vp.x / osz.x, vp.y / osz.y))))
-	var world: Vector2 = osz * px
-	var y: float = round((top + vp.y - bottom - world.y) * 0.5)
-	if not corner.active:
-		y = minf(maxf(y, top - 4.0 * px), vp.y - world.y)  # Hide at most the wall's top cap.
-	var x: float = round((vp.x - right - world.x) * 0.5)
-	if right > 0.0:
-		x = maxf(x, -(16.0 * px - 8.0))  # May tuck the outer left wall under the screen edge.
-	x = minf(x, round((vp.x - world.x) * 0.5))
-	var target: Vector2 = Vector2(x, y)
-	office.scale = Vector2(px, px)
-	if _world_tween:
-		_world_tween.kill()
-	if animate:
-		_world_tween = create_tween()
-		_world_tween.tween_property(office, "position", target, 0.22) \
-			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	else:
-		office.position = target
+	office.rig.insets = Vector4(top, right, bottom, 0.0)
 	var margin: float = 8.0 if not corner.active else 2.0
 	overlay.safe_rect = Rect2(margin, top + 4.0, vp.x - right - margin * 2.0, vp.y - top - bottom - 8.0)
+	if office.is_ready_to_draw() and not office.rig.following:
+		office.rig.frame_all(not _animate)
 
 
 func _update_status() -> void:

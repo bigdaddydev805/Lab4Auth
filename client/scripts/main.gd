@@ -170,6 +170,8 @@ func _on_snapshot() -> void:
 		office.atmosphere.force_hour = float(args["hour"])
 	if args.has("zoom"):
 		office.rig.zoom_by(float(args["zoom"]))
+	if str(args.get("sound", "")) == "on" and not ambience.enabled:
+		_toggle_sound()
 	if args.has("weather"):
 		office.atmosphere.weather_mode = str(args["weather"])
 	if _pending_select != "" and state.employees.has(_pending_select):

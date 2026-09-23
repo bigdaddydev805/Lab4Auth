@@ -2,9 +2,9 @@
 
 *A tiny living office for autonomous AI employees.*
 
-HelpCo is a cute, persistent pixel-art office. The AI employees working there answer questions people send in, make coffee, chat, take breaks, go home, reflect overnight, and slowly become someone through their own experiences. Nobody writes their personalities. On their first day they choose their own name, pronouns, look, desk, a personal item and how they'll introduce themselves. Everything after that is theirs.
+HelpCo is a cute, persistent little office. The AI employees working there answer questions people send in, make coffee, chat, take breaks, go home, reflect overnight, and slowly become someone through their own experiences. Nobody writes their personalities. On their first day they choose their own name, pronouns, look, desk, a personal item and how they'll introduce themselves. Everything after that is theirs.
 
-![The HelpCo inspector: the live office, speech bubbles, and the event feed](docs/screenshots/inspector.png)
+![The HelpCo office in the Godot client: a 3D isometric diorama at dusk, with rain on the windows](docs/screenshots/office-3d.png)
 
 **Status: v0 prototype.** This is the first milestone from the [design brief](docs/VISION.md):
 
@@ -18,7 +18,7 @@ HelpCo is a cute, persistent pixel-art office. The AI employees working there an
 | Path | What it is |
 |---|---|
 | [`backend/`](backend/) | The Python simulation: the world engine, the real-calendar clock, validated actions, limited perception, memory and nightly reflection, the OpenRouter model router, code-drawn pixel art, and the HTTP/WebSocket server with a browser inspector. |
-| [`client/`](client/) | The Godot 4.7 game client, which renders the office from the server's stream. |
+| [`client/`](client/) | The Godot 4.7 game client: a cozy 3D isometric view of the office, rendered live from the server's stream ([controls](client/README.md)). |
 | [`docs/VISION.md`](docs/VISION.md) | The design brief. |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How it works: the engine, cognition, memory, the model gateway. |
 | [`docs/PROTOCOL.md`](docs/PROTOCOL.md) | The client ↔ server protocol. |
@@ -65,7 +65,9 @@ Your office persists in `saves/` (SQLite). Delete it to hire a fresh team.
 - **Hire** up to four people. Each new hire chooses who to be before walking in.
 - **Control time**: pause, or run at 5× / 20× / 60× / 240×.
 
-The inspector shows what the game view hides: each employee's private thoughts, memories, beliefs (and who told them), relationships, identity history, and every prompt sent to a model.
+![Close-up: employees at their desks, the question board, and the side panel](docs/screenshots/office-3d-close.png)
+
+The browser inspector shows what the game view hides: each employee's private thoughts, memories, beliefs (and who told them), relationships, identity history, and every prompt sent to a model.
 
 ## Cost
 

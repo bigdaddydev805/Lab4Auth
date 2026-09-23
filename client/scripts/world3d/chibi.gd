@@ -98,8 +98,8 @@ func tick(now_ms: float, delta: float) -> void:
 	_sync_held()
 	_animate(delta, typing)
 	if _ring:
-		_ring.visible = selected
-		if selected:
+		_ring.visible = selected and not seated
+		if _ring.visible:
 			var s: float = 1.0 + 0.06 * sin(_t * 4.0)
 			_ring.scale = Vector3(s, 1.0, s)
 

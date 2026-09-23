@@ -49,3 +49,19 @@ Every meaningful event, with actor, room, targets, payload, witnesses, source (l
 - Generated catalog items.
 - Replay/rewind UI.
 - The departure lifecycle.
+
+## Godot client (`client/`)
+
+The client renders what the server says and sends the owner's commands. It never changes the world.
+
+| Part | Role |
+|---|---|
+| `scripts/net/`, `scripts/model/` | WebSocket link with reconnect, the client-side world state, and a smoothed sim clock that extrapolates between server ticks. |
+| `scripts/world3d/office3d.gd` | Builds the 3D diorama from the snapshot's office layout, places items on surfaces, keeps one chibi per present employee, and animates the ambient details (plants, LEDs, monitors that switch on when someone sits down, coffee steam, the question board, the wall clock). |
+| `scripts/world3d/chibi.gd` | One employee: body built from their look, following the server's path with the sim clock, animated procedurally. |
+| `scripts/world3d/props.gd`, `kit.gd` | Furniture, items and clutter from primitives, with shared materials and meshes. |
+| `scripts/world3d/atmosphere.gd` | Time-of-day lighting from the office's local time, rain and weather (ambience only, seeded by date), window shader, dust. |
+| `scripts/world3d/camera_rig.gd` | Isometric orthographic camera: drag/pinch/wheel, follow the selected employee, framing around the HUD. |
+| `scripts/world3d/ambience.gd` | Procedural sound: rain, room tone, keyboards, coffee machine, chimes. Off by default. |
+| `scripts/ui/` | HUD (top bar, side panel with feed/team/questions/whiteboard, owner bar), name tags and speech bubbles projected over the 3D characters. |
+

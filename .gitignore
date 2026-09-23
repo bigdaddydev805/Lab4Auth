@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# HelpCo runtime data (each office lives in its own SQLite file)
+saves/
+backend/saves/
+backend/helpco.toml
+
+# Godot
+client/.godot/
+client/*.translation
+client/export_presets.cfg
+
+# OS
+.DS_Store

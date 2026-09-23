@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "helpco"
+version = "0.1.0"
+description = "HelpCo — a tiny living office for autonomous AI employees (simulation backend)"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.9",   # HTTP + WebSocket server, and the OpenRouter client
+    "pillow>=10",     # code-drawn pixel art (character sheets, office art)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "pytest-aiohttp>=1.0"]
+
+[project.scripts]
+helpco = "helpco.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["helpco*"]
+
+[tool.setuptools.package-data]
+helpco = ["server/static/*", "*.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -1,0 +1,72 @@
+# HelpCo default configuration. Copy helpco.example.toml to helpco.toml to override any of this.
+
+[world]
+name = "HelpCo"
+seed = 7
+# Sim calendar start. "today" = the next workday morning on the real calendar,
+# or an ISO date/time like "2027-03-15T08:30".
+start = "today"
+# IANA timezone for the office calendar. "local" = this computer's timezone.
+timezone = "local"
+save_dir = "saves/default"
+
+[clock]
+# realtime: time flows at `scale` sim-seconds per real second while the server runs.
+# lockstep: headless and deterministic; time only advances when no one is thinking.
+mode = "realtime"
+scale = 20.0
+# While a conversation is going on, the clock slows to this scale so chats read at a human pace.
+conversation_scale = 3.0
+# Skip the empty office at night and on weekends.
+skip_nights = true
+skip_weekends = true
+
+[office]
+day_starts = "08:30"
+workday_start = "09:00"
+lunch = "12:30"
+workday_end = "17:00"
+earliest_leave = "16:00"
+closes = "18:00"
+
+[employees]
+initial = 2
+max = 4
+
+[llm]
+# "auto" uses OpenRouter when the API key env var is set, otherwise the offline mock brain.
+provider = "auto"            # auto | openrouter | mock
+api_key_env = "OPENROUTER_API_KEY"
+base_url = "https://openrouter.ai/api/v1"
+app_url = "https://github.com/bigdaddydev805/Lab4Auth"
+app_title = "HelpCo"
+# live: always call the API. record: call and store every call (default).
+# replay: only use stored calls (a miss is an error). replay_then_live: stored calls until the first new prompt.
+cassette = "record"
+# Hard spending guard for this process (USD). When hit, employees fall back to the mock brain.
+budget_usd = 5.0
+request_timeout_s = 60
+# Privacy: ask OpenRouter to avoid providers that train on/retain prompts.
+data_collection = "deny"
+
+# Model route per task. Each entry is a fallback list of OpenRouter model slugs.
+# "openrouter/auto" always resolves; pin exact slugs (see openrouter.ai/models) for reproducible runs.
+[llm.routes]
+onboard = ["openrouter/auto"]
+decide = ["openrouter/auto"]
+converse = ["openrouter/auto"]
+compose = ["openrouter/auto"]
+reflect = ["openrouter/auto"]
+
+# Per-employee overrides, keyed by hire order ("1", "2", ...). Example:
+# [llm.employees.1]
+# decide = ["anthropic/claude-sonnet-5"]
+[llm.employees]
+
+[memory]
+# Retrieval weights (from the Generative Agents reference code).
+w_recency = 0.5
+w_relevance = 3.0
+w_importance = 2.0
+recency_decay_per_hour = 0.995
+max_memories_in_prompt = 8

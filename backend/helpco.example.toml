@@ -1,0 +1,45 @@
+# Copy to helpco.toml (next to where you run `helpco`) and edit. Anything omitted uses helpco/defaults.toml.
+
+[world]
+name = "HelpCo"
+seed = 7
+start = "today"              # or "2027-03-15"
+timezone = "local"           # or e.g. "America/Los_Angeles"
+save_dir = "saves/default"   # the office persists here (SQLite). Delete it to start a new office.
+
+[clock]
+scale = 20.0                 # sim seconds per real second. 1.0 = real time; 20 = a workday in ~25 minutes
+conversation_scale = 3.0     # time slows to this while people are talking
+skip_nights = true
+skip_weekends = true
+
+[employees]
+initial = 2
+max = 4                      # one per desk
+
+[llm]
+provider = "auto"            # auto (OpenRouter if the key is set, else offline mock) | openrouter | mock
+api_key_env = "OPENROUTER_API_KEY"
+budget_usd = 5.0             # hard cap for this process; employees fall back to the mock brain when it's hit
+cassette = "record"          # record every call (replayable). replay / replay_then_live for experiments
+data_collection = "deny"     # ask OpenRouter to avoid providers that train on prompts
+
+# Which OpenRouter models handle which task. Each is a fallback list (tried in order).
+# "openrouter/auto" always works; pin exact slugs for reproducible runs. Check https://openrouter.ai/models
+# for current slugs and prices — the ones below are examples, not recommendations.
+[llm.routes]
+onboard  = ["openrouter/auto"]                          # choosing a name, look, desk… on day one
+decide   = ["openrouter/auto"]                          # what to do next (called often: keep it cheap)
+converse = ["openrouter/auto"]                          # replies in conversation
+compose  = ["openrouter/auto"]                          # writing answers to questions
+reflect  = ["openrouter/auto"]                          # nightly reflection (once per employee per day)
+# decide  = ["openai/gpt-5.6-luna", "qwen/qwen3.6-flash"]
+# reflect = ["anthropic/claude-sonnet-5"]
+
+# Give specific employees their own models (by hire order) — e.g. to compare model families,
+# or so that everyone isn't the same underlying model.
+# [llm.employees.1]
+# decide = ["anthropic/claude-sonnet-5"]
+# reflect = ["anthropic/claude-sonnet-5"]
+# [llm.employees.2]
+# decide = ["qwen/qwen3.6-flash"]

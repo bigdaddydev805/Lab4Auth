@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HelpCo Inspector</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo">HelpCo</span><span class="sub">inspector</span></div>
+    <div class="clock">
+      <div id="clock-date">connecting…</div>
+      <div id="clock-time" class="big">–</div>
+    </div>
+    <div class="controls">
+      <button id="btn-pause" title="Pause / resume">Pause</button>
+      <span class="speed" id="speeds">
+        <button data-scale="5">5×</button><button data-scale="20">20×</button><button data-scale="60">60×</button><button data-scale="240">240×</button>
+      </span>
+      <span id="status" class="pill">offline</span>
+      <span id="brain" class="pill muted" title="Which brain the employees use">brain: –</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="left">
+      <div class="stage"><canvas id="office" width="768" height="448"></canvas></div>
+      <div class="owner card">
+        <h3>You, the owner</h3>
+        <form id="form-question" class="row">
+          <input id="q-text" placeholder="Send a question to the office… e.g. Why does Saturn have rings?" autocomplete="off">
+          <button type="submit">Send question</button>
+        </form>
+        <form id="form-message" class="row">
+          <select id="msg-to"></select>
+          <input id="msg-text" placeholder="Say something over the intercom (only they hear it)" autocomplete="off">
+          <button type="submit">Say</button>
+        </form>
+        <form id="form-give" class="row">
+          <span class="label">Give</span>
+          <select id="give-to"></select>
+          <select id="give-kind">
+            <option value="rubber_duck">a rubber duck</option><option value="succulent">a tiny succulent</option>
+            <option value="mug">a mug</option><option value="snow_globe">a snow globe</option>
+            <option value="books">a stack of books</option><option value="photo_frame">a framed photo</option>
+          </select>
+          <button type="submit">Give</button>
+          <span class="spacer"></span>
+          <button type="button" id="btn-hire">Hire someone</button>
+        </form>
+        <div id="toast" class="toast"></div>
+      </div>
+    </section>
+
+    <section class="right card">
+      <nav class="tabs">
+        <button data-tab="feed" class="active">Feed</button>
+        <button data-tab="people">People</button>
+        <button data-tab="questions">Questions</button>
+        <button data-tab="files">Files</button>
+        <button data-tab="models">Models</button>
+      </nav>
+      <div class="tab" id="tab-feed">
+        <label class="filter"><input type="checkbox" id="feed-verbose"> show every step</label>
+        <ol id="feed"></ol>
+      </div>
+      <div class="tab hidden" id="tab-people">
+        <div id="people-list" class="people"></div>
+        <div id="person" class="person"></div>
+      </div>
+      <div class="tab hidden" id="tab-questions"><div id="questions"></div></div>
+      <div class="tab hidden" id="tab-files"><div id="files"></div></div>
+      <div class="tab hidden" id="tab-models"><div id="models"></div></div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

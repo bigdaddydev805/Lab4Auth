@@ -307,7 +307,7 @@ class Cognition:
         hint["n"] = self._count[e.id]
         task = "converse" if hint["addressed"] else "decide"
         req = LLMRequest(task=task, system=[self.rules, self.identity_block(e)], user=text, schema=action_schema(),
-                         schema_name="next_action", max_tokens=450, emp_id=e.id, hire_no=e.hire_no, hint=hint,
+                         schema_name="next_action", max_tokens=1200, emp_id=e.id, hire_no=e.hire_no, hint=hint,
                          sim_ms=eng.clock.ms)
         eng.spawn(eng.gateway.call(req), lambda res: self._apply(e, req, reasons, res), order_key=e.id)
 
@@ -369,7 +369,7 @@ class Cognition:
         L += ["", "Write the answer you'd send them now: plain text, friendly and clear, at most about 150 words. "
                   "If you're unsure about something, say so honestly instead of making it up. Reply with just the answer."]
         req = LLMRequest(task="compose", system=[self.rules.split("\n\nWhat you can do")[0], self.identity_block(e)],
-                         user="\n".join(L), schema=None, max_tokens=600, emp_id=e.id, hire_no=e.hire_no,
+                         user="\n".join(L), schema=None, max_tokens=1500, emp_id=e.id, hire_no=e.hire_no,
                          hint={"emp_id": e.id, "seed": eng.seed, "sim_ms": eng.clock.ms, "question": q.text},
                          sim_ms=eng.clock.ms)
 
@@ -427,7 +427,7 @@ Before you walk in, decide for yourself:
 
 Reply with only a JSON object with keys: name, pronouns, appearance (skin, hair_style, hair_color, top_color, pants_color, shoes_color, accessories, accessory_color), desk, personal_item, introduction, why."""
         req = LLMRequest(task="onboard", system=[self.rules.split("\n\nWhat you can do")[0]], user=user,
-                         schema=onboard_schema(free or ["desk_1"]), schema_name="first_day", max_tokens=900,
+                         schema=onboard_schema(free or ["desk_1"]), schema_name="first_day", max_tokens=1500,
                          emp_id=e.id, hire_no=e.hire_no,
                          hint={"emp_id": e.id, "seed": eng.seed, "sim_ms": eng.clock.ms, "free_desks": free,
                                "taken_names": [x.name for x in coworkers]}, sim_ms=eng.clock.ms)

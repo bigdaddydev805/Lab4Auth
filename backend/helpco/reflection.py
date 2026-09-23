@@ -110,7 +110,7 @@ class Reflection:
                 "top_activity": "working at my desk" if activities else None}
         return LLMRequest(task="reflect", system=[eng.cognition.rules.split("\n\nWhat you can do")[0],
                                                   eng.cognition.identity_block(e)],
-                          user=user, schema=reflect_schema(), schema_name="nightly_reflection", max_tokens=1800,
+                          user=user, schema=reflect_schema(), schema_name="nightly_reflection", max_tokens=3000,
                           emp_id=e.id, hire_no=e.hire_no, hint=hint, sim_ms=clock.ms)
 
     def _person(self, name: str | None):

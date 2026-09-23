@@ -38,12 +38,12 @@ func setup(office_view: OfficeView, world_state: WorldState) -> void:
 	add_child(_root)
 
 
-## Shows a bubble over `emp_id` (replacing any bubble they already have).
+## Shows a bubble over `emp_id`, replacing their previous bubble of the same kind.
 func show_bubble(emp_id: String, text: String, kind: String = "speech") -> void:
 	if text.strip_edges() == "" or not office.characters.has(emp_id):
 		return
 	for b: SpeechBubble in _bubbles.duplicate():
-		if b.emp_id == emp_id:
+		if b.emp_id == emp_id and b.kind == kind:
 			_remove_bubble(b)
 	var bubble: SpeechBubble = SpeechBubble.new()
 	bubble.setup(emp_id, text, kind)
@@ -56,7 +56,8 @@ func show_bubble(emp_id: String, text: String, kind: String = "speech") -> void:
 func talking() -> Dictionary:
 	var out: Dictionary = {}
 	for b: SpeechBubble in _bubbles:
-		out[b.emp_id] = true
+		if b.kind == "speech":
+			out[b.emp_id] = true
 	return out
 
 

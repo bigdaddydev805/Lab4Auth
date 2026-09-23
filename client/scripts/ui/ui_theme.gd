@@ -96,7 +96,7 @@ static func build() -> Theme:
 	t.set_color("font_color", "PopupMenu", INK)
 	t.set_color("font_hover_color", "PopupMenu", INK)
 
-	t.set_stylebox("panel", "PanelContainer", box(Color(CREAM, 0.97), 12, 2, INK, 10, 10))
+	t.set_stylebox("panel", "PanelContainer", box(CREAM, 12, 2, INK, 10, 10))
 	t.set_type_variation("BarPanel", "PanelContainer")
 	t.set_stylebox("panel", "BarPanel", box(BAR_BG, 0, 0, INK, 12, 4))
 	t.set_type_variation("Card", "PanelContainer")

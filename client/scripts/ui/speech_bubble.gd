@@ -13,6 +13,7 @@ const FONT_SIZE := 14
 const FADE_SEC := 0.3
 
 var emp_id: String = ""
+var kind: String = "speech"
 var born_msec: int = 0
 var lifetime: float = 3.0
 var flipped: bool = false:
@@ -35,8 +36,9 @@ var _age: float = 0.0
 
 
 ## `kind` is "speech" or "intercom" (the owner's voice, drawn in pink).
-func setup(id: String, text: String, kind: String = "speech") -> void:
+func setup(id: String, text: String, bubble_kind: String = "speech") -> void:
 	emp_id = id
+	kind = bubble_kind
 	born_msec = Time.get_ticks_msec()
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if kind == "intercom":

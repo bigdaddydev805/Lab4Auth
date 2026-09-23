@@ -50,8 +50,11 @@ func _init() -> void:
 	_name = Label.new()
 	_name.theme_type_variation = "Heading"
 	_name.add_theme_font_size_override("font_size", 18)
+	_name.clip_text = true
+	_name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	names.add_child(_name)
 	_sub = _small(names, "Muted")
+	_sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_activity = _small(names, "Small")
 	_activity.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var close: Button = Button.new()
@@ -65,6 +68,9 @@ func _init() -> void:
 	_thinking = _small(col, "Small")
 	_thinking.text = "thinking…"
 	_thinking.add_theme_color_override("font_color", UiTheme.PINK)
+	var caption: Label = _small(col, "Muted")
+	caption.text = "Last private thought"
+	caption.add_theme_font_size_override("font_size", 11)
 	_thought = _small(col, "Small")
 	_thought.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_thought.add_theme_font_override("font", UiTheme.italic_font())
@@ -148,6 +154,7 @@ func _describe_action(d: Dictionary, name_of: Callable) -> String:
 func _small(parent: Node, variation: String) -> Label:
 	var l: Label = Label.new()
 	l.theme_type_variation = variation
+	l.custom_minimum_size.x = 40
 	parent.add_child(l)
 	return l
 

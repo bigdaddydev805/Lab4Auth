@@ -53,6 +53,9 @@ func setup(id: String, text: String, kind: String = "speech") -> void:
 	_update_pivot()
 	scale = Vector2(0.5, 0.5)
 	modulate.a = 0.0
+
+
+func _ready() -> void:
 	var tw: Tween = create_tween().set_parallel(true)
 	tw.tween_property(self, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(self, "modulate:a", 1.0, 0.12)

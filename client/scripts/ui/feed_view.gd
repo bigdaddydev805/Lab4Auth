@@ -56,6 +56,11 @@ func add_event(ev: Dictionary, time_text: String) -> void:
 	_trim_and_render()
 
 
+## Highest event seq shown (0 when empty).
+func max_seq() -> int:
+	return 0 if _entries.is_empty() else int(_entries[-1]["seq"])
+
+
 func reset() -> void:
 	_entries.clear()
 	_seqs.clear()

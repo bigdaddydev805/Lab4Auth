@@ -1,0 +1,6 @@
+# Godot editor/import cache (regenerated on first open)
+.godot/
+*.import
+# Local exports
+export/
+*.tmp

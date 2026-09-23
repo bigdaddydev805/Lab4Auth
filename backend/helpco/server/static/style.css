@@ -93,3 +93,20 @@ canvas#office { display: block; width: 100%; height: auto; image-rendering: pixe
 pre { white-space: pre-wrap; word-break: break-word; background: var(--chip); padding: 10px; border-radius: 10px; font-size: 12px; max-height: 420px; overflow: auto; }
 details summary { cursor: pointer; }
 .muted { color: var(--muted); }
+
+/* phones: a compact header that scrolls away, and a panel that flows under the office */
+@media (max-width: 700px) {
+  header.top { position: static; flex-wrap: wrap; gap: 6px 12px; padding: 10px 12px; }
+  .brand .sub { display: none; }
+  .clock { margin-left: auto; text-align: right; }
+  .clock .big { font-size: 18px; }
+  #clock-date { font-size: 11px; }
+  .controls { margin-left: 0; width: 100%; gap: 6px; }
+  .controls button { padding: 5px 9px; }
+  main { padding: 10px; gap: 10px; }
+  .stage { padding: 6px; border-radius: 12px; }
+  .owner { margin-top: 10px; padding: 12px; }
+  .row input { flex-basis: 100%; }
+  .right { position: static; max-height: none; }
+  .tab { max-height: 70vh; }
+}
